@@ -27,14 +27,15 @@ class UserController extends Controller
                 'type' => 'required',
                 'open_id' => 'required',
                 'name' => 'required',
-                'email' => 'required|email|unique:users,email',
+                'email' => 'required',
+                // 'password' => 'required|min:6'
             ]);
 
             if($validateUser->fails()){
                 return response()->json([
-                    'status' => false,
-                    'message' => 'validation error',
-                    'errors' => $validateUser->errors()
+                    'code' => 401,
+                    'msg' => 'validation error',
+                    'data' => $validateUser->errors()
                 ], 401);
             }
 
@@ -52,30 +53,43 @@ class UserController extends Controller
             // Whether user has already logged in or not
             // Empty means doen't exist
             // Then save the user in the database for the first time
-            if (empty(user -> id)) {
+            if (empty($user -> id)) {
                 // This token is user id
-                $validated['token'] = md5(uniquid().rand(10000, 99999));
+                $validated['token'] = md5(uniqid().rand(10000, 99999));
+                // Encrypt password
+                // $validated['password'] = Hash::make($validated['password']);
                 // User first time created
                 $validated['created_at'] = Carbon::now();
+                // Returns the id of the row after saving
                 $userId = User::insertGetId($validated);
+                // User's all information
+                $userInfo = User::where('id', '=', $userId)->first();
+                // Store access token using sanctum
+                $accessToken = $userInfo->createToken(uniqid())->plainTextToken;
+                $userInfo->access_token = $accessToken;
+                User::where('id', '=', $userId)->update(['access_token' => $accessToken]);
+
+                return response()->json([
+                    'code' => 200,
+                    'msg' => 'User Created Successfully',
+                    'data' => $userInfo
+                ], 200);
             }
 
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password)
-            ]);
+            $accessToken = $user->createToken(uniqid())->plainTextToken;
+            $user->access_token = $accessToken;
+            User::where('open_id', '=', $validated['open_id'])->update(['access_token' => $accessToken]);
 
             return response()->json([
-                'status' => true,
-                'message' => 'User Created Successfully',
-                'token' => $user->createToken("API TOKEN")->plainTextToken
+                'code' => 200,
+                'msg' => 'User Logged In Successfully',
+                'data' => $user
             ], 200);
 
         } catch (\Throwable $th) {
             return response()->json([
-                'status' => false,
-                'message' => $th->getMessage()
+                'code' => 500,
+                'msg' => $th->getMessage()
             ], 500);
         }
     }
