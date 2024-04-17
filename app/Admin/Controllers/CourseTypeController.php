@@ -37,6 +37,8 @@ class CourseTypeController extends AdminController
     {
         $form = new Form(new CourseType());
 
+        // This is for parent category dropdown
+        // Pluck option in CourseController does the same as selectOptions
         $form->select('parent_id', __('Parent Category'))->options((new CourseType)::selectOptions());
         $form->text('title', __('Title'));
         $form->textarea('description', __('Description'));

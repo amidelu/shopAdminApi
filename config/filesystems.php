@@ -36,6 +36,9 @@ return [
             'throw' => false,
         ],
 
+        // for Disk [admin] not configured, please add a disk config in `config/filesystems.php` error
+        'admin'  => [ 'driver' => 'local', 'root'   => storage_path('app'), ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
