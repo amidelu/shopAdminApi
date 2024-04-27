@@ -37,7 +37,12 @@ return [
         ],
 
         // for Disk [admin] not configured, please add a disk config in `config/filesystems.php` error
-        'admin'  => [ 'driver' => 'local', 'root'   => storage_path('app'), ],
+        'admin'  => [
+            'driver' => 'local',
+            'root'=> storage_path('uploads'),
+            'visibility'=> 'public',
+            'url'=> env('APP_URL').'uploads/',
+        ],
 
         'public' => [
             'driver' => 'local',
